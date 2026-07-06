@@ -2365,3 +2365,4 @@ class SopApp {
 document.addEventListener("DOMContentLoaded", () => {
   window.sopApp = new SopApp();
 });
+
