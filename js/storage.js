@@ -638,3 +638,4 @@ class StorageManager {
 
 // Khởi tạo đối tượng toàn cục
 window.storageManager = new StorageManager();
+
