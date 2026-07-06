@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CX Droppii Portal - Quy trình & Hướng dẫn Công việc Nội bộ</title>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Firebase Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- THANH BÊN (SIDEBAR) -->
+    <aside class="sidebar">
+      <div class="brand-section">
+        <div class="brand-logo">C</div>
+        <span class="brand-title">CX Droppii Portal</span>
+      </div>
+      
+      <!-- User Profile Widget -->
+      <div class="user-profile-widget" id="user-profile-widget" style="padding: 12px 16px; margin: 0 16px 16px 16px; background-color: var(--primary-light); border-radius: var(--border-radius); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s ease;">
+        <div class="user-avatar" id="user-avatar-lbl" style="width: 36px; height: 36px; background-color: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;">
+          CX
+        </div>
+        <div style="display: flex; flex-direction: column; overflow: hidden; flex-grow: 1;">
+          <span id="user-profile-name" style="font-weight: 600; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Nhân viên CX</span>
+          <span id="user-profile-role" style="font-size: 11px; color: var(--text-muted);">Vai trò: Viewer</span>
+        </div>
+        <i data-lucide="chevron-down" style="width:14px; height:14px; color:var(--text-muted); flex-shrink: 0;"></i>
+      </div>
+      
+      <div class="sidebar-scrollable">
+        <!-- PHÂN HỆ CHÍNH -->
+        <div class="section-label" style="margin-top:0;">
+          <span>PHÂN HỆ CHÍNH</span>
+        </div>
+        <ul class="filter-list" style="margin-bottom:16px;">
+          <li>
+            <button class="filter-item-btn" id="menu-processes">
+              <span style="display:flex; align-items:center; gap:8px;">
+                <i data-lucide="file-text" style="width:16px; height:16px;"></i> Quy trình công việc
+              </span>
+              <span class="item-count" id="count-all-sops">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="filter-item-btn active" id="menu-announcements">
+              <span style="display:flex; align-items:center; gap:8px;">
+                <i data-lucide="megaphone" style="width:16px; height:16px;"></i> Thông tin vận hành
+              </span>
+              <span class="item-count" id="count-all-anns">0</span>
+            </button>
+          </li>
+        </ul>
+
+        <!-- BỘ LỌC CHO QUY TRÌNH (SOP) -->
+        <div id="processes-filters-group" style="display:none;">
+          <!-- Danh mục -->
+          <div class="section-label">
+            <span>DANH MỤC</span>
+            <button class="section-label-btn" id="btn-manage-categories">
+              <i data-lucide="settings" style="width:12px; height:12px;"></i> Sửa
+            </button>
+          </div>
+          <ul class="filter-list" id="categories-filter-list" style="margin-bottom:16px;">
+            <!-- Render danh mục động -->
+          </ul>
+
+          <!-- Thẻ (Tags) -->
+          <div class="section-label">
+            <span>THẺ TRA CỨU</span>
+          </div>
+          <div class="tag-cloud" id="tags-filter-cloud">
+            <!-- Render thẻ động -->
+          </div>
+        </div>
+
+        <!-- BỘ LỌC CHO THÔNG TIN VẬN HÀNH (ANNOUNCEMENTS) -->
+        <div id="announcements-filters-group">
+          <div class="section-label">
+            <span>TRẠNG THÁI VẬN HÀNH</span>
+          </div>
+          <ul class="filter-list">
+            <li>
+              <button class="filter-item-btn active" id="ann-filter-all">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="layers" style="width:16px; height:16px;"></i> Tất cả cập nhật
+                </span>
+                <span class="item-count" id="count-ann-all">0</span>
+              </button>
+            </li>
+            <li>
+              <button class="filter-item-btn" id="ann-filter-upcoming" data-status="upcoming">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="clock" style="width:16px; height:16px; color:var(--priority-medium)"></i> Sắp chạy
+                </span>
+                <span class="item-count" id="count-ann-upcoming">0</span>
+              </button>
+            </li>
+            <li>
+              <button class="filter-item-btn" id="ann-filter-active" data-status="active">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="play-circle" style="width:16px; height:16px; color:var(--priority-low)"></i> Đang chạy
+                </span>
+                <span class="item-count" id="count-ann-active">0</span>
+              </button>
+            </li>
+            <li>
+              <button class="filter-item-btn" id="ann-filter-stopped" data-status="stopped">
+                <span style="display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="stop-circle" style="width:16px; height:16px; color:var(--priority-high)"></i> Đã ngừng
+                </span>
+                <span class="item-count" id="count-ann-stopped">0</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Footer: Đồng bộ đám mây -->
+      <div class="sidebar-footer">
+        <div class="sync-status-card">
+          <div class="sync-header">
+            <span>Đồng bộ đám mây</span>
+            <span class="sync-dot" id="sync-indicator"></span>
+          </div>
+          <p id="sync-desc-text" style="font-size:12px; color:var(--text-muted); line-height:1.4;">
+            Đang chạy offline trên máy này.
+          </p>
+          <button class="sync-btn" id="btn-open-sync">
+            <i data-lucide="cloud-lightning" style="width:14px; height:14px;"></i> Thiết lập Online
+          </button>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- KHU VỰC CHÍNH (MAIN VIEWPORT) -->
+    <main class="main-viewport">
+      
+      <!-- Top Header -->
+      <header class="main-header">
+        <div class="search-wrapper">
+          <i data-lucide="search" class="search-icon" style="width:18px; height:18px;"></i>
+          <input type="text" class="search-input" id="search-input" placeholder="Tìm tên quy trình, từ khóa, các bước...">
+        </div>
+        
+        <div class="header-actions">
+          <button class="btn-icon" id="btn-theme-toggle" title="Đổi giao diện Sáng/Tối">
+            <i data-lucide="sun" id="theme-icon" style="width:18px; height:18px;"></i>
+          </button>
+          <button class="btn btn-secondary" id="btn-export-backup" title="Tải file dữ liệu dự phòng về máy">
+            <i data-lucide="download" style="width:16px; height:16px;"></i> Sao lưu
+          </button>
+          <button class="btn btn-secondary" id="btn-trigger-import" title="Nhập file dữ liệu từ máy khác">
+            <i data-lucide="upload" style="width:16px; height:16px;"></i> Nhập dữ liệu
+          </button>
+          <input type="file" id="file-import-input" style="display:none;" accept=".json">
+          
+          <button class="btn btn-primary" id="btn-create-process">
+            <i data-lucide="plus" style="width:18px; height:18px;"></i> Thêm thông báo
+          </button>
+        </div>
+      </header>
+      
+      <!-- Workspace Scrollable -->
+      <div class="workspace-content">
+        
+        <!-- Dashboard Thống kê -->
+        <section class="dashboard-grid" id="dashboard-section">
+          <div class="widget-card">
+            <div class="widget-icon">
+              <i data-lucide="file-text" style="width:24px; height:24px;"></i>
+            </div>
+            <div class="widget-info">
+              <span class="widget-val" id="stat-total-sops">0</span>
+              <span class="widget-lbl">Tổng Quy trình</span>
+            </div>
+          </div>
+          <div class="widget-card">
+            <div class="widget-icon" style="background-color:var(--priority-high-bg); color:var(--priority-high)">
+              <i data-lucide="alert-triangle" style="width:24px; height:24px;"></i>
+            </div>
+            <div class="widget-info">
+              <span class="widget-val" id="stat-high-sops">0</span>
+              <span class="widget-lbl">Khẩn cấp (Cao)</span>
+            </div>
+          </div>
+          <div class="widget-card">
+            <div class="widget-icon" style="background-color:rgba(16, 185, 129, 0.15); color:var(--priority-low)">
+              <i data-lucide="tags" style="width:24px; height:24px;"></i>
+            </div>
+            <div class="widget-info">
+              <span class="widget-val" id="stat-total-tags">0</span>
+              <span class="widget-lbl">Số Thẻ Tra Cứu</span>
+            </div>
+          </div>
+          <div class="widget-card">
+            <div class="widget-icon" style="background-color:rgba(245, 158, 11, 0.15); color:var(--priority-medium)">
+              <i data-lucide="folder-open" style="width:24px; height:24px;"></i>
+            </div>
+            <div class="widget-info">
+              <span class="widget-val" id="stat-total-categories">0</span>
+              <span class="widget-lbl">Số Danh Mục</span>
+            </div>
+          </div>
+        </section>
+        
+        <!-- Danh sách quy trình -->
+        <section style="display:flex; flex-direction:column; gap:20px;">
+          <div class="grid-title-row">
+            <h2 class="grid-title" id="grid-header-title">Tất cả quy trình công việc</h2>
+            <span id="results-count-text" style="font-size:14px; color:var(--text-muted);">Hiển thị 0 quy trình</span>
+          </div>
+          
+          <div class="process-grid" id="process-grid">
+            <!-- Render danh sách cards -->
+          </div>
+
+          <!-- Bảng phân loại các quy trình đã ẩn/hết hạn/đã ngừng (dạng thu gọn) -->
+          <div id="stopped-processes-container" style="display:none; margin-top: 10px;">
+            <button type="button" id="btn-toggle-stopped-sops" style="background:none; border:none; display:flex; align-items:center; gap:8px; cursor:pointer; padding:12px 0; color:var(--text-secondary); font-weight:600; font-size:14px; width:100%; border-top:1px dashed var(--border-color); text-align:left; outline:none;">
+              <i data-lucide="chevron-right" id="stopped-chevron" style="width:16px; height:16px; transition:transform 0.2s ease;"></i>
+              <span>QUY TRÌNH ĐÃ NGỪNG / HẾT HẠN (<span id="stopped-sops-count">0</span>)</span>
+            </button>
+            <div id="stopped-process-grid" class="process-grid" style="display:none; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:12px;">
+              <!-- Render danh sách cards quy trình đã ngừng -->
+            </div>
+          </div>
+          
+          <!-- Empty State -->
+          <div class="empty-state" id="empty-state" style="display:none;">
+            <i data-lucide="inbox" class="empty-state-icon"></i>
+            <h3>Không tìm thấy quy trình nào</h3>
+            <p>Vui lòng thử lại với từ khóa khác hoặc tạo mới quy trình đầu tiên của bạn.</p>
+          </div>
+        </section>
+        
+      </div>
+    </main>
+    
+    <!-- BẢNG XEM CHI TIẾT QUY TRÌNH (DETAILS SLIDE-OUT PANEL) -->
+    <div class="details-overlay" id="details-panel">
+      <div class="details-header">
+        <h3 style="font-size:16px; font-weight:700; color:var(--text-muted);">CHI TIẾT HƯỚNG DẪN</h3>
+        <button class="btn-icon" id="btn-close-details" style="border:none; background:none;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      
+      <div class="details-content">
+        <div class="details-meta-block">
+          <span class="category-tag" id="details-category">Hành chính</span>
+          <span class="priority-dot-badge" id="details-priority">Khẩn cấp</span>
+        </div>
+        
+        <h2 class="details-title" id="details-title">Tên quy trình công việc mẫu</h2>
+        
+        <p class="details-desc" id="details-description">Mô tả ngắn gọn về quy trình tại đây...</p>
+        
+        <!-- Tiến trình thực hiện -->
+        <div id="details-steps-group">
+          <div class="section-label" style="margin-top:0;">
+            <span>CÁC BƯỚC THỰC HIỆN</span>
+            <span id="steps-progress-text" style="font-weight:600; color:var(--primary)">0/0 hoàn thành</span>
+          </div>
+          <div class="steps-container" id="details-steps-list">
+            <!-- Render các bước -->
+          </div>
+        </div>
+        
+        <div class="meta-footer-info">
+          <div><i data-lucide="user" style="width:12px; height:12px; display:inline; margin-right:4px; vertical-align:middle;"></i> Người viết: <span id="details-author" style="font-weight:500;">Chưa xác định</span></div>
+          <div><i data-lucide="calendar" style="width:12px; height:12px; display:inline; margin-right:4px; vertical-align:middle;"></i> Tạo: <span id="details-created">--/--/----</span></div>
+          <div><i data-lucide="clock" style="width:12px; height:12px; display:inline; margin-right:4px; vertical-align:middle;"></i> Sửa lần cuối: <span id="details-updated">--/--/----</span></div>
+        </div>
+      </div>
+      
+      <!-- Footer Panel Xem: Edit / Delete / Print -->
+      <div style="padding:16px 24px; border-top:1px solid var(--border-color); display:flex; gap:10px; background-color:var(--bg-card);">
+        <button class="btn btn-secondary" style="flex-grow:1;" id="btn-print-process">
+          <i data-lucide="printer" style="width:16px; height:16px;"></i> In PDF
+        </button>
+        <button class="btn btn-secondary" id="btn-edit-process" style="flex-grow:1;">
+          <i data-lucide="edit" style="width:16px; height:16px;"></i> Chỉnh sửa
+        </button>
+        <button class="btn btn-secondary" id="btn-delete-process" style="background-color:var(--priority-high-bg); color:var(--priority-high); border-color:transparent;">
+          <i data-lucide="trash-2" style="width:16px; height:16px;"></i> Xóa
+        </button>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- ==================== MODALS DIALOGS ==================== -->
+
+  <!-- 1. MODAL TRÌNH BIÊN TẬP QUY TRÌNH (EDITOR MODAL) -->
+  <div class="modal-backdrop" id="editor-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="editor-modal-title">Thêm Quy trình Hướng dẫn Mới</h3>
+        <button class="btn-icon btn-close-modal" id="btn-close-editor-modal" style="border:none; background:none;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      
+      <form id="process-form" onsubmit="event.preventDefault();">
+        <input type="hidden" id="form-process-id">
+        <div class="modal-body">
+          <!-- Tên Quy trình -->
+          <div class="form-group">
+            <label class="form-label" for="form-title">Tên quy trình hướng dẫn <span style="color:var(--priority-high)">*</span></label>
+            <input type="text" class="form-control" id="form-title" placeholder="Ví dụ: Quy trình cài đặt phần mềm máy tính mới..." required>
+          </div>
+          
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            <!-- Danh mục -->
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="form-category">Danh mục <span style="color:var(--priority-high)">*</span></label>
+              <select class="form-control" id="form-category" required>
+                <!-- Render các danh mục tùy chọn -->
+              </select>
+            </div>
+            <!-- Độ ưu tiên -->
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="form-priority">Mức độ ưu tiên</label>
+              <select class="form-control" id="form-priority">
+                <option value="low">Thấp (Thông thường)</option>
+                <option value="medium" selected>Trung bình</option>
+                <option value="high">Cao (Khẩn cấp)</option>
+              </select>
+            </div>
+            <!-- Trạng thái hoạt động -->
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="form-status">Trạng thái hoạt động</label>
+              <select class="form-control" id="form-status">
+                <option value="active" selected>Đang chạy (Active)</option>
+                <option value="stopped">Đã ngừng (Stopped)</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Thẻ tags -->
+          <div class="form-group">
+            <label class="form-label" for="form-tags">Thẻ từ khóa (Cách nhau bằng dấu phẩy)</label>
+            <input type="text" class="form-control" id="form-tags" placeholder="Ví dụ: it, phan mem, may tinh, onboarding">
+          </div>
+          
+          <!-- Tác giả / Người phụ trách -->
+          <div class="form-group">
+            <label class="form-label" for="form-author">Người soạn thảo / Phụ trách <span style="color:var(--priority-high)">*</span></label>
+            <input type="text" class="form-control" id="form-author" placeholder="Nhập tên người soạn thảo..." required>
+          </div>
+          
+          <!-- Mô tả ngắn -->
+          <div class="form-group">
+            <label class="form-label" for="form-description">Mô tả ngắn gọn quy trình</label>
+            <textarea class="form-control" id="form-description" placeholder="Tóm tắt ngắn gọn nội dung và mục đích của quy trình xử lý này..."></textarea>
+          </div>
+          
+          <!-- Các bước thực hiện -->
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label">CÁC BƯỚC THỰC HIỆN CHI TIẾT <span style="color:var(--priority-high)">*</span></label>
+              <button type="button" class="section-label-btn" id="btn-form-add-step">
+                <i data-lucide="plus-circle" style="width:14px; height:14px;"></i> Thêm bước
+              </button>
+            </div>
+            <div class="steps-editor-list" id="form-steps-list">
+              <!-- Render các ô nhập bước -->
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-editor">Hủy</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-process-submit">Lưu quy trình</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 1B. MODAL TRÌNH BIÊN TẬP THÔNG BÁO VẬN HÀNH (ANNOUNCEMENT EDITOR MODAL) -->
+  <div class="modal-backdrop" id="announcement-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="ann-modal-title">Thêm Thông báo Vận hành Mới</h3>
+        <button class="btn-icon btn-close-modal" id="btn-close-ann-modal" style="border:none; background:none;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      
+      <form id="announcement-form" onsubmit="event.preventDefault();">
+        <input type="hidden" id="form-ann-id">
+        <div class="modal-body">
+          <!-- Tiêu đề Thông báo -->
+          <div class="form-group">
+            <label class="form-label" for="ann-form-title">Tiêu đề thông tin vận hành <span style="color:var(--priority-high)">*</span></label>
+            <input type="text" class="form-control" id="ann-form-title" placeholder="Ví dụ: Thay đổi đầu số hotline CSKH..." required>
+          </div>
+          
+          <div class="form-row-2">
+            <!-- Phân loại / Bộ phận -->
+            <div class="form-group">
+              <label class="form-label" for="ann-form-category">Phân loại / Bộ phận <span style="color:var(--priority-high)">*</span></label>
+              <input type="text" class="form-control" id="ann-form-category" placeholder="Ví dụ: Vận chuyển, IT, CSKH..." required>
+            </div>
+            <!-- Trạng thái -->
+            <div class="form-group">
+              <label class="form-label" for="ann-form-status">Trạng thái vận hành</label>
+              <select class="form-control" id="ann-form-status">
+                <option value="upcoming">Sắp chạy (Scheduled)</option>
+                <option value="active" selected>Đang chạy (Active/Live)</option>
+                <option value="stopped">Đã ngừng (Stopped/Archived)</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-row-2">
+            <!-- Ngày bắt đầu -->
+            <div class="form-group">
+              <label class="form-label" for="ann-form-start-date">Ngày bắt đầu hiệu lực</label>
+              <input type="date" class="form-control" id="ann-form-start-date">
+            </div>
+            <!-- Ngày kết thúc -->
+            <div class="form-group">
+              <label class="form-label" for="ann-form-end-date">Ngày kết thúc hiệu lực</label>
+              <input type="date" class="form-control" id="ann-form-end-date">
+            </div>
+          </div>
+          
+          <!-- Người đăng -->
+          <div class="form-group">
+            <label class="form-label" for="ann-form-author">Người thông báo / Phụ trách <span style="color:var(--priority-high)">*</span></label>
+            <input type="text" class="form-control" id="ann-form-author" placeholder="Nhập tên người thông báo..." required>
+          </div>
+          
+          <!-- Nội dung chi tiết -->
+          <div class="form-group">
+            <label class="form-label" for="ann-form-content">Nội dung chi tiết thông báo <span style="color:var(--priority-high)">*</span></label>
+            <textarea class="form-control" id="ann-form-content" rows="6" placeholder="Nhập đầy đủ nội dung thông báo cập nhật vận hành tại đây..." required></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-ann-editor">Hủy</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-ann-submit">Lưu thông báo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. MODAL QUẢN LÝ DANH MỤC (CATEGORIES MANAGER) -->
+  <div class="modal-backdrop" id="categories-modal">
+    <div class="modal-container" style="width:400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Quản lý Danh mục</h3>
+        <button class="btn-icon" id="btn-close-cat-modal" style="border:none; background:none;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <ul class="category-manager-list" id="cat-manager-list">
+          <!-- Render danh mục -->
+        </ul>
+        
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label">Thêm Danh mục Mới</label>
+          <div class="category-add-row">
+            <input type="text" class="form-control" id="form-new-cat-name" placeholder="Tên danh mục mới..." style="flex-grow: 1;">
+            <button type="button" class="btn btn-primary" id="btn-add-cat-submit" style="padding: 10px 14px;">Thêm</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-close-cat-manager-footer" style="width:100%;">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. MODAL CÀI ĐẶT ĐỒNG BỘ ĐÁM MÂY (FIREBASE SYNC MODAL) -->
+  <div class="modal-backdrop" id="sync-modal">
+    <div class="modal-container" style="width:500px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Cài đặt Đồng bộ Đám mây (Online)</h3>
+        <button class="btn-icon" id="btn-close-sync-modal" style="border:none; background:none;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="firebase-guide">
+          <strong>Hướng dẫn nhanh 3 bước thiết lập miễn phí:</strong><br>
+          1. Truy cập <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a>, nhấn <b>Add project</b> tạo dự án mới.<br>
+          2. Tại Dashboard dự án, nhấn chọn biểu tượng <b>Web (&lt;/&gt;)</b> để tạo Web App và copy đoạn mã <code>firebaseConfig</code>.<br>
+          3. Tại thanh bên dự án, mở <b>Firestore Database</b> và nhấn <b>Create database</b> ở chế độ Test mode (hoặc bật quyền đọc/ghi). Sau đó dán mã cấu hình bên dưới.
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="form-firebase-config">Cấu hình Firebase (Định dạng JSON) <span style="color:var(--priority-high)">*</span></label>
+          <textarea class="form-control" id="form-firebase-config" rows="6" placeholder='{
+  "apiKey": "AIzaSyA...",
+  "authDomain": "ten-du-an.firebaseapp.com",
+  "projectId": "ten-du-an",
+  "storageBucket": "ten-du-an.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:12345:web:abcd"
+}'></textarea>
+          <span style="font-size:11px; color:var(--text-muted)">Nhập toàn bộ đối tượng config Firebase dạng JSON.</span>
+        </div>
+      </div>
+      
+      <div class="modal-footer" style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; width:100%; gap:12px;">
+          <button type="button" class="btn btn-secondary" id="btn-disconnect-sync" style="flex-grow:1; background-color:var(--priority-high-bg); color:var(--priority-high); border-color:transparent;">Ngắt kết nối</button>
+          <button type="button" class="btn btn-primary" id="btn-connect-sync" style="flex-grow:2;">Lưu & Kết nối</button>
+        </div>
+        <button type="button" class="btn btn-secondary" id="btn-close-sync-footer" style="width:100%;">Quay lại Offline</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.5. MODAL THÔNG TIN TÀI KHOẢN (USER PROFILE MODAL) -->
+  <div class="modal-backdrop" id="profile-modal">
+    <div class="modal-container" style="width:420px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="profile-modal-title">Thông tin Tài khoản CX</h3>
+        <button class="btn-icon" id="btn-close-profile-modal" style="border:none; background:none; cursor:pointer;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      <form id="profile-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="profile-name-input">Họ và Tên <span style="color:var(--priority-high)">*</span></label>
+            <input type="text" class="form-control" id="profile-name-input" placeholder="Nhập đầy đủ họ tên của bạn..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="profile-role-select">Vai trò & Quyền hạn</label>
+            <select class="form-control" id="profile-role-select">
+              <option value="admin">Quản trị viên (Admin) - Toàn quyền</option>
+              <option value="editor">Biên tập viên (Editor) - Thêm/Sửa quy trình & thông báo</option>
+              <option value="viewer">Thành viên (Viewer) - Chỉ xem & thực hành quy trình</option>
+            </select>
+          </div>
+          <div class="form-group" id="profile-passcode-group">
+            <label class="form-label" for="profile-passcode-input">Đổi mật khẩu / Mã PIN</label>
+            <input type="password" class="form-control" id="profile-passcode-input" placeholder="Nhập mật khẩu/PIN mới nếu muốn đổi...">
+            <span style="font-size:11px; color:var(--text-muted)">Tất cả các tài khoản bắt buộc phải có mật khẩu để bảo mật.</span>
+          </div>
+          <div class="firebase-guide" style="margin-top: 16px; background-color: var(--primary-light); border-color: var(--border-color); color: var(--text-secondary); line-height: 1.5;">
+            <strong>💡 Quy định phân loại tài khoản:</strong><br>
+            • <b>Admin:</b> Được quyền thêm, sửa, xóa quy trình/thông báo; biên tập danh mục; quản trị đồng bộ đám mây và sao lưu dữ liệu.<br>
+            • <b>Editor:</b> Được quyền viết bài mới và chỉnh sửa tài liệu. Không có quyền xóa và không có quyền cài đặt hệ thống.<br>
+            • <b>Viewer:</b> Chỉ xem tài liệu hướng dẫn, thực hành tích chọn bước và sao chép/tải ảnh. Không làm thay đổi nội dung chung.
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; flex-direction:column; gap:10px;">
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Lưu thông tin</button>
+          <div style="display:flex; gap:10px; width:100%;">
+            <button type="button" class="btn btn-secondary" id="btn-manage-accounts-trigger" style="flex:1; display:none; background-color:var(--primary-light); color:var(--primary); border-color:var(--border-color);">Quản lý User</button>
+            <button type="button" class="btn btn-secondary" id="btn-logout" style="flex:1; background-color:var(--priority-high-bg); color:var(--priority-high); border-color:transparent;">Đăng xuất</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3.7. MODAL QUẢN LÝ TÀI KHOẢN (ACCOUNTS MANAGEMENT MODAL) -->
+  <div class="modal-backdrop" id="accounts-modal">
+    <div class="modal-container" style="width:650px; max-width:90%;">
+      <div class="modal-header">
+        <h3 class="modal-title">Quản lý Danh sách Tài khoản</h3>
+        <button class="btn-icon" id="btn-close-accounts-modal" style="border:none; background:none; cursor:pointer;">
+          <i data-lucide="x" style="width:20px; height:20px;"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <span style="font-size:12px; color:var(--text-muted);">Chỉ có Admin mới có quyền thêm mới, khóa (đóng) hoặc xóa tài khoản.</span>
+          <button type="button" class="btn btn-primary" id="btn-show-add-account-form" style="padding: 6px 12px; font-size:13px; flex-shrink:0;">
+            <i data-lucide="plus" style="width:14px; height:14px;"></i> Thêm tài khoản
+          </button>
+        </div>
+
+        <!-- Form soạn thảo tài khoản (Ẩn mặc định) -->
+        <form id="account-editor-form" style="display:none; padding:16px; background:var(--primary-light); border:1px solid var(--border-color); border-radius:var(--border-radius); flex-direction:column; gap:12px;">
+          <input type="hidden" id="editor-account-id">
+          <div class="form-row-2" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="editor-account-name">Họ và Tên <span style="color:var(--priority-high)">*</span></label>
+              <input type="text" id="editor-account-name" class="form-control" placeholder="Nhập tên tài khoản..." required>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="editor-account-role">Vai trò</label>
+              <select id="editor-account-role" class="form-control">
+                <option value="admin">Quản trị viên (Admin)</option>
+                <option value="editor">Biên tập viên (Editor)</option>
+                <option value="viewer">Thành viên (Viewer)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row-2" style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="editor-account-passcode">Mật khẩu / PIN <span style="color:var(--priority-high)">*</span></label>
+              <input type="password" id="editor-account-passcode" class="form-control" placeholder="Nhập mật khẩu hoặc mã PIN..." required>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="editor-account-status">Trạng thái tài khoản</label>
+              <select id="editor-account-status" class="form-control">
+                <option value="active">Hoạt động (Active)</option>
+                <option value="locked">Khóa/Đóng (Locked)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:4px;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-account-editor" style="padding: 6px 12px; font-size:13px;">Hủy</button>
+            <button type="submit" class="btn btn-primary" style="padding: 6px 12px; font-size:13px;">Lưu thông tin</button>
+          </div>
+        </form>
+
+        <!-- Bảng danh sách tài khoản -->
+        <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:var(--border-radius);">
+          <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; min-width: 500px;">
+            <thead>
+              <tr style="background:var(--primary-light); border-bottom:1px solid var(--border-color); color:var(--text-primary);">
+                <th style="padding:10px 12px;">Họ tên</th>
+                <th style="padding:10px 12px;">Vai trò</th>
+                <th style="padding:10px 12px;">Mật mã PIN</th>
+                <th style="padding:10px 12px;">Trạng thái</th>
+                <th style="padding:10px 12px; text-align:right;">Hành động</th>
+              </tr>
+            </thead>
+            <tbody id="accounts-table-body">
+              <!-- Render động -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. LIGHTBOX MODAL (XEM ẢNH PHÓNG TO) -->
+  <div class="modal-backdrop" id="lightbox-modal" style="background-color: rgba(0, 0, 0, 0.95);">
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 210; display: flex; gap: 10px;">
+      <button class="btn btn-secondary" id="btn-copy-lightbox-img" style="background:rgba(255,255,255,0.15); border:none; color:#fff; padding:10px 16px; border-radius:var(--border-radius-sm); cursor:pointer;">
+        <i data-lucide="copy" style="width:16px; height:16px;"></i> Sao chép ảnh
+      </button>
+      <a class="btn btn-secondary" id="btn-download-lightbox-img" style="background:rgba(255,255,255,0.15); border:none; color:#fff; padding:10px 16px; border-radius:var(--border-radius-sm); text-decoration:none; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" href="#" download="sop_image.jpg">
+        <i data-lucide="download" style="width:16px; height:16px;"></i> Tải ảnh về
+      </a>
+      <button class="btn-icon" id="btn-close-lightbox" style="border:none; background:rgba(255,255,255,0.15); color:#fff; width:44px; height:44px; border-radius:50%; cursor:pointer;">
+        <i data-lucide="x" style="width:24px; height:24px;"></i>
+      </button>
+    </div>
+    <div style="max-width: 90%; max-height: 90%; display: flex; align-items: center; justify-content: center;">
+      <img id="lightbox-img" src="" alt="Hình ảnh phóng to" style="max-width:100%; max-height:90vh; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.5); object-fit:contain;">
+    </div>
+  </div>
+
+  <!-- 5. LOGIN SCREEN OVERLAY -->
+  <div class="login-overlay" id="login-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-body); z-index:9999; display:flex; align-items:center; justify-content:center;">
+    <div style="width:420px; padding:32px; background:var(--bg-card); border-radius:var(--border-radius-lg); border:1px solid var(--border-color); box-shadow:var(--shadow-lg); text-align:center; display:flex; flex-direction:column; gap:20px;">
+      <div style="width:60px; height:60px; background:var(--primary); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; margin:0 auto; box-shadow: 0 4px 12px rgba(99,102,241,0.3);">C</div>
+      <div>
+        <h2 style="font-size:22px; font-weight:700; color:var(--text-primary);">CX Droppii Portal</h2>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">Chọn tài khoản nhân sự để đăng nhập cổng thông tin</p>
+      </div>
+      
+      <!-- List tài khoản khả dụng -->
+      <div id="login-account-list" style="display:flex; flex-direction:column; gap:10px; max-height:220px; overflow-y:auto; padding-right:4px;">
+        <!-- Tải động danh sách tài khoản -->
+      </div>
+
+      <!-- Khung nhập passcode (Ẩn mặc định) -->
+      <div id="login-passcode-panel" style="display:none; flex-direction:column; gap:12px; border-top:1px solid var(--border-color); padding-top:16px;">
+        <div style="font-size:13px; color:var(--text-secondary); text-align:left;">
+          Nhập mã PIN của <strong id="selected-login-name">...</strong>:
+        </div>
+        <input type="password" id="login-passcode-input" class="form-control" placeholder="Mã PIN 4 số (mặc định: 1234 cho Admin)" style="text-align:center; letter-spacing:8px; font-size:20px; font-weight:700; max-width: 240px; margin: 0 auto;" maxlength="6">
+        <div style="display:flex; gap:10px; margin-top:4px;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-passcode" style="flex:1; justify-content:center;">Quay lại</button>
+          <button type="button" class="btn btn-primary" id="btn-submit-passcode" style="flex:2; justify-content:center;">Đăng nhập</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toast-notif">Thông báo ở đây</div>
+
+  <!-- CHƯƠNG TRÌNH ĐIỀU KHIỂN CHÍNH -->
+  <script src="js/data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
